@@ -26,7 +26,6 @@ async function run() {
     const database=client.db("Techtronics");
     const etCollection=database.collection("etCollection");
     const brandCollection=database.collection("brands");
-
     app.get('/brands',async (req,res)=>{
       const info=await brandCollection.find().toArray()
       res.send(info)
@@ -41,6 +40,15 @@ async function run() {
       const id=req.params.id
       const query={_id:new ObjectId(id)}
       const result=await etCollection.findOne(query)
+      res.send(result)
+    })
+    app.get('/search/:name',async(req,res)=>{
+      
+      const name=req.params.name
+      console.log(name)
+      const query={ name:new RegExp(name, "i")}
+      const result=await etCollection.find(query).toArray()
+      console.log('result.toArray(): ', result);
       res.send(result)
     })
     app.put('/product/:id',async (req,res)=>{ 

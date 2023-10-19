@@ -1,5 +1,6 @@
 const express=require('express')
-const cors=requir('cors');
+const cors=require('cors');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const app=express()
 const port=5000
 app.use(express.json())
@@ -7,7 +8,6 @@ app.use(cors());
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = "mongodb+srv://434darkmaster:kCnhj5usUf3mXiDF@cluster0.l2bfny4.mongodb.net/?retryWrites=true&w=majority";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -23,8 +23,14 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const database=client.db("TechAndElect");
-    const etCollection=database.collections("etCollection");
+    const database=client.db("Techtronics");
+    const etCollection=database.collection("etCollection");
+    const brandCollection=database.collection("brands");
+    app.get('/brands',async (req,res)=>{
+      const info=await brandCollection.find().toArray()
+      res.send(info)
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -36,4 +42,4 @@ async function run() {
 run().catch(console.dir);
 
 
-app.listen(port,()=>{console.log("Server Started")})
+app.listen(port,()=>{console.log(`Server Started`)})

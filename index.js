@@ -1,6 +1,6 @@
 const express=require('express')
 const cors=require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
 const app=express()
 const port=5000
 app.use(express.json())
@@ -34,12 +34,46 @@ async function run() {
 
     app.post('/product',async(req,res)=>{
       const product=req.body
-      console.log('product: ', product);
       const result=await etCollection.insertOne(product)
+      res.send(result)
+    })
+    app.get('/product/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id:new ObjectId(id)}
+      const result=await etCollection.findOne(query)
+      res.send(result)
+    })
+    app.put('/product/:id',async (req,res)=>{ 
+      const id=req.params.id
+      const query={_id:new ObjectId(id)}
+      const options={upsert:true}
+      const product=req.body
+      console.log(product)
+      const updatePorduct={
+        $set:{
+          company:product.company,
+          image:product.image,
+          name:product.name,
+          price:product.price,
+          rating:product.rating,
+          type:product.type,
+        }
+      }
+      const result=await etCollection.updateOne(query,updatePorduct,options)
       res.send(result)
     })
     app.get('/products',async(req,res)=>{
       res.send(await etCollection.find().toArray())
+    })
+    
+    app.get('/company/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={company:id} 
+      const products=etCollection.find(query)
+      const result=await products.toArray()
+      const query2={_id:new ObjectId(id)}
+      const company= await brandCollection.findOne(query2)
+      res.send([result,company]) 
     })
 
     // Send a ping to confirm a successful connection

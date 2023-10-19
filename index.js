@@ -26,9 +26,17 @@ async function run() {
     const database=client.db("Techtronics");
     const etCollection=database.collection("etCollection");
     const brandCollection=database.collection("brands");
+
     app.get('/brands',async (req,res)=>{
       const info=await brandCollection.find().toArray()
       res.send(info)
+    })
+
+    app.post('/product',async(req,res)=>{
+      const product=req.body
+      console.log('product: ', product);
+      const result=await etCollection.insertOne(product)
+      res.send(result)
     })
 
     // Send a ping to confirm a successful connection

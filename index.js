@@ -38,6 +38,9 @@ async function run() {
       const result=await etCollection.insertOne(product)
       res.send(result)
     })
+    app.get('/products',async(req,res)=>{
+      res.send(await etCollection.find().toArray())
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

@@ -1,8 +1,8 @@
-const express=require('express')
-const cors=require('cors');
-const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
-const app=express()
-const port=5000
+const express = require('express')
+const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const app = express()
+const port = 5000
 app.use(express.json())
 app.use(cors());
 
@@ -23,83 +23,108 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const database=client.db("Techtronics");
-    const etCollection=database.collection("etCollection");
-    const brandCollection=database.collection("brands");
-    const cartCollection=database.collection("cart");
-    app.get('/brands',async (req,res)=>{
-      const info=await brandCollection.find().toArray()
+    const database = client.db("Techtronics");
+    const etCollection = database.collection("etCollection");
+    const brandCollection = database.collection("brands");
+    const cartCollection = database.collection("cart");
+    app.get('/brands', async (req, res) => {
+      const info = await brandCollection.find().toArray()
       res.send(info)
     })
-    app.get('/cart/:email',async (req,res)=>{
-      const email=req.params.email
-      console.log(email)
-      const query={email:email}
-      const cartProduct=cartCollection.find(query)
-      res.send(await cartProduct.toArray())
+    app.get('/cartitem/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email: email }
+      const cartProduct = await cartCollection.find(query).toArray()
+      res.send({ itemNumber: cartProduct.length })
     })
-    app.post('/cart',async(req,res)=>{
-      const cart=req.body
-      console.log("POST CART:",cart)
-      const result=await cartCollection.insertOne(cart)
+    app.delete('/cart/:id',async (req,res)=>{
+      const id=req.params.id;
+      const query ={_id:new ObjectId(id)}
+      const result= await cartCollection.deleteOne(query)
+      res.send(result)
+    })
+    app.get('/cart/:email', async (req, res) => {
+      const email = req.params.email
+      console.log(email)
+      const query = { email: email }
+      const cartProduct = await cartCollection.find(query).toArray()
+      
+      const product = new Array()
+      for (let index = 0; index < cartProduct.length; index++) {
+        const element = cartProduct[index];
+        const query = { _id: new ObjectId(element.productId) }
+        let result = await etCollection.findOne(query)
+        const query2 = { _id: new ObjectId(result.company) }
+        const result2 = await brandCollection.findOne(query2)
+        result.company=result2?.name
+        result.cartId=element._id;  
+        if (result) {
+          product.push(result)
+        }
+      }
+      res.send(product)
+    })
+    app.post('/cart', async (req, res) => {
+      const cart = req.body
+      const result = await cartCollection.insertOne(cart)
       res.send(result)
     })
 
-    app.post('/product',async(req,res)=>{
-      const product=req.body
-      const result=await etCollection.insertOne(product)
+    app.post('/product', async (req, res) => {
+      const product = req.body
+      const result = await etCollection.insertOne(product)
       res.send(result)
     })
-    app.get('/product/:id',async(req,res)=>{
-      const id=req.params.id
-      const query={_id:new ObjectId(id)}
-      const result=await etCollection.findOne(query)
+    app.get('/product/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await etCollection.findOne(query)
       res.send(result)
     })
-    app.get('/popular',async(req,res)=>{
-      const result=etCollection.find().sort({price:1,rating:-1}).limit(4)
-      const products= await result.toArray()
+    app.get('/popular', async (req, res) => {
+      const result = etCollection.find().sort({ price: 1, rating: -1 }).limit(4)
+      const products = await result.toArray()
       res.send(products)
     })
-    app.get('/search/:name',async(req,res)=>{
-      
-      const name=req.params.name
-      console.log(name)
-      const query={ name:new RegExp(name, "i")}
-      const result=await etCollection.find(query).toArray()
+    app.get('/search/:name', async (req, res) => {
+
+      const name = req.params.name
+      const query = { name: new RegExp(name, "i") }
+      const result = await etCollection.find(query).toArray()
+      console.log(`${Date.now()} /search : Length ${result.length}`)
       res.send(result)
     })
-    app.put('/product/:id',async (req,res)=>{ 
-      const id=req.params.id
-      const query={_id:new ObjectId(id)}
-      const options={upsert:true}
-      const product=req.body
+    app.put('/product/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const product = req.body
       console.log(product)
-      const updatePorduct={
-        $set:{
-          company:product.company,
-          image:product.image,
-          name:product.name,
-          price:product.price,
-          rating:product.rating,
-          type:product.type,
+      const updatePorduct = {
+        $set: {
+          company: product.company,
+          image: product.image,
+          name: product.name,
+          price: product.price,
+          rating: product.rating,
+          type: product.type,
         }
       }
-      const result=await etCollection.updateOne(query,updatePorduct,options)
+      const result = await etCollection.updateOne(query, updatePorduct, options)
       res.send(result)
     })
-    app.get('/products',async(req,res)=>{
+    app.get('/products', async (req, res) => {
       res.send(await etCollection.find().toArray())
     })
-    
-    app.get('/company/:id',async(req,res)=>{
-      const id=req.params.id
-      const query={company:id} 
-      const products=etCollection.find(query)
-      const result=await products.toArray()
-      const query2={_id:new ObjectId(id)}
-      const company= await brandCollection.findOne(query2)
-      res.send([result,company]) 
+
+    app.get('/company/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { company: id }
+      const products = etCollection.find(query)
+      const result = await products.toArray()
+      const query2 = { _id: new ObjectId(id) }
+      const company = await brandCollection.findOne(query2)
+      res.send([result, company])
     })
 
     // Send a ping to confirm a successful connection
@@ -113,4 +138,4 @@ async function run() {
 run().catch(console.dir);
 
 
-app.listen(port,()=>{console.log(`Server Started`)})
+app.listen(port, () => { console.log(`Server Started`) })

@@ -1,12 +1,12 @@
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
-const port = 5000
-app.use(express.json())
+
+const port=process.env.PORT || 5000
+
 app.use(cors());
-
-
+app.use(express.json())
 
 const uri = "mongodb+srv://434darkmaster:kCnhj5usUf3mXiDF@cluster0.l2bfny4.mongodb.net/?retryWrites=true&w=majority";
 
@@ -14,7 +14,7 @@ const uri = "mongodb+srv://434darkmaster:kCnhj5usUf3mXiDF@cluster0.l2bfny4.mongo
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
+    strict: false,
     deprecationErrors: true,
   }
 });
@@ -22,16 +22,21 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const database = client.db("Techtronics");
     const etCollection = database.collection("etCollection");
     const brandCollection = database.collection("brands");
     const cartCollection = database.collection("cart");
     app.get('/brands', async (req, res) => {
-      const info = await brandCollection.find().toArray()
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      const data=brandCollection.find()
+      const info = await data.toArray()
       res.send(info)
     })
     app.get('/cartitem/:email', async (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const email = req.params.email
       const query = { email: email }
       const cartProduct = await cartCollection.find(query).toArray()
@@ -44,6 +49,8 @@ async function run() {
       res.send(result)
     })
     app.get('/cart/:email', async (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const email = req.params.email
       console.log(email)
       const query = { email: email }
@@ -76,22 +83,26 @@ async function run() {
       res.send(result)
     })
     app.get('/product/:id', async (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await etCollection.findOne(query)
       res.send(result)
     })
     app.get('/popular', async (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const result = etCollection.find().sort({ price: 1, rating: -1 }).limit(4)
       const products = await result.toArray()
       res.send(products)
     })
     app.get('/search/:name', async (req, res) => {
-
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const name = req.params.name
       const query = { name: new RegExp(name, "i") }
       const result = await etCollection.find(query).toArray()
-      console.log(`${Date.now()} /search : Length ${result.length}`)
       res.send(result)
     })
     app.put('/product/:id', async (req, res) => {
@@ -114,10 +125,16 @@ async function run() {
       res.send(result)
     })
     app.get('/products', async (req, res) => {
-      res.send(await etCollection.find().toArray())
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      const data=etCollection.find()
+      const result=await data.toArray()
+      res.send(result)
     })
 
     app.get('/company/:id', async (req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
       const id = req.params.id
       const query = { company: id }
       const products = etCollection.find(query)
@@ -127,8 +144,9 @@ async function run() {
       res.send([result, company])
     })
 
+
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
@@ -137,5 +155,8 @@ async function run() {
 }
 run().catch(console.dir);
 
+app.get('/',(req, res) => {
+  res.send("Backend Running")
+})
 
 app.listen(port, () => { console.log(`Server Started`) })

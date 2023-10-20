@@ -26,9 +26,23 @@ async function run() {
     const database=client.db("Techtronics");
     const etCollection=database.collection("etCollection");
     const brandCollection=database.collection("brands");
+    const cartCollection=database.collection("cart");
     app.get('/brands',async (req,res)=>{
       const info=await brandCollection.find().toArray()
       res.send(info)
+    })
+    app.get('/cart/:email',async (req,res)=>{
+      const email=req.params.email
+      console.log(email)
+      const query={email:email}
+      const cartProduct=cartCollection.find(query)
+      res.send(await cartProduct.toArray())
+    })
+    app.post('/cart',async(req,res)=>{
+      const cart=req.body
+      console.log("POST CART:",cart)
+      const result=await cartCollection.insertOne(cart)
+      res.send(result)
     })
 
     app.post('/product',async(req,res)=>{
@@ -43,7 +57,7 @@ async function run() {
       res.send(result)
     })
     app.get('/popular',async(req,res)=>{
-      const result=etCollection.find().sort({rating:-1,price:1}).limit(4)
+      const result=etCollection.find().sort({price:1,rating:-1}).limit(4)
       const products= await result.toArray()
       res.send(products)
     })

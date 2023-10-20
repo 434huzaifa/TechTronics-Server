@@ -42,13 +42,17 @@ async function run() {
       const result=await etCollection.findOne(query)
       res.send(result)
     })
+    app.get('/popular',async(req,res)=>{
+      const result=etCollection.find().sort({rating:-1,price:1}).limit(4)
+      const products= await result.toArray()
+      res.send(products)
+    })
     app.get('/search/:name',async(req,res)=>{
       
       const name=req.params.name
       console.log(name)
       const query={ name:new RegExp(name, "i")}
       const result=await etCollection.find(query).toArray()
-      console.log('result.toArray(): ', result);
       res.send(result)
     })
     app.put('/product/:id',async (req,res)=>{ 

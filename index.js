@@ -6,7 +6,7 @@ dotenv.config()
 const app = express()
 const port=process.env.PORT || 5000
 
-app.use(cors());
+app.use(cors()); 
 app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.l2bfny4.mongodb.net/?retryWrites=true&w=majority`;
